@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Unforgettable Creator — Sales Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #16161f;
+    --border: #1e1e2e;
+    --accent: #7c5cfc;
+    --accent2: #00d4aa;
+    --accent3: #ff6b6b;
+    --accent4: #ffa94d;
+    --text: #e8e8f0;
+    --muted: #6b6b8a;
+    --green: #00d4aa;
+    --red: #ff6b6b;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── GRID BACKGROUND ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(124,92,252,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124,92,252,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper { position: relative; z-index: 1; }
+
+  /* ── HEADER ── */
+  header {
+    padding: 28px 40px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    backdrop-filter: blur(10px);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10,10,15,0.9);
+  }
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+  }
+  .logo span { color: var(--accent); }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .live-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--green);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .live-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+  .last-updated {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+  }
+  .refresh-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 7px 16px;
+    border-radius: 6px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+  }
+  .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── NAV TABS ── */
+  .nav-tabs {
+    display: flex;
+    gap: 0;
+    padding: 0 40px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .nav-tab {
+    padding: 14px 24px;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    font-family: 'DM Mono', monospace;
+  }
+  .nav-tab:hover { color: var(--text); }
+  .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ── PAGES ── */
+  .page { display: none; padding: 32px 40px; }
+  .page.active { display: block; }
+
+  /* ── SECTION TITLE ── */
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 20px;
+  }
+
+  /* ── SCORECARDS ── */
+  .scorecards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .scorecard {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .scorecard:hover { border-color: var(--accent); }
+  .scorecard::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .scorecard.green::before { background: var(--green); }
+  .scorecard.purple::before { background: var(--accent); }
+  .scorecard.orange::before { background: var(--accent4); }
+  .scorecard.red::before { background: var(--red); }
+  .sc-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+  .sc-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .scorecard.green .sc-value { color: var(--green); }
+  .scorecard.purple .sc-value { color: var(--accent); }
+  .scorecard.orange .sc-value { color: var(--accent4); }
+  .scorecard.red .sc-value { color: var(--red); }
+  .sc-sub {
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* ── CHARTS GRID ── */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 28px;
+  }
+  .charts-grid.thirds {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+  .charts-grid.full {
+    grid-template-columns: 1fr;
+  }
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    transition: border-color 0.2s;
+  }
+  .chart-card:hover { border-color: rgba(124,92,252,0.3); }
+  .chart-card.span2 { grid-column: span 2; }
+  .chart-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    letter-spacing: -0.3px;
+  }
+  .chart-sub {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+    margin-bottom: 20px;
+  }
+  .chart-wrap {
+    position: relative;
+    height: 240px;
+  }
+  .chart-wrap.tall { height: 300px; }
+  .chart-wrap.pie { height: 220px; }
+
+  /* ── LEADERBOARD TABLE ── */
+  .lb-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .lb-table th {
+    text-align: left;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 400;
+  }
+  .lb-table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(30,30,46,0.5);
+    vertical-align: middle;
+  }
+  .lb-table tr:last-child td { border-bottom: none; }
+  .lb-table tr:hover td { background: rgba(124,92,252,0.04); }
+  .rep-name {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+  }
+  .role-badge {
+    font-size: 9px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-family: 'DM Mono', monospace;
+  }
+  .role-badge.closer { background: rgba(124,92,252,0.15); color: var(--accent); border: 1px solid rgba(124,92,252,0.3); }
+  .role-badge.setter { background: rgba(0,212,170,0.1); color: var(--green); border: 1px solid rgba(0,212,170,0.25); }
+  .cash-val { color: var(--green); font-family: 'Syne', sans-serif; font-weight: 700; }
+  .comm-val { color: var(--accent4); }
+  .rank-num {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--border);
+    width: 36px;
+  }
+  .rank-num.top { color: var(--accent4); }
+
+  /* ── PROGRESS BAR ── */
+  .progress-wrap { margin-bottom: 20px; }
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    margin-bottom: 8px;
+  }
+  .progress-label .name { color: var(--text); }
+  .progress-label .val { color: var(--green); font-family: 'Syne', sans-serif; font-weight: 700; }
+  .progress-bar {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width 1s ease;
+  }
+
+  /* ── LOADING / EMPTY STATES ── */
+  .loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: var(--muted);
+    gap: 16px;
+  }
+  .spinner {
+    width: 32px; height: 32px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: var(--muted);
+    gap: 12px;
+    font-size: 12px;
+    text-align: center;
+  }
+  .empty-icon { font-size: 36px; opacity: 0.3; }
+
+  /* ── ERROR BANNER ── */
+  .error-banner {
+    background: rgba(255,107,107,0.1);
+    border: 1px solid rgba(255,107,107,0.3);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    font-size: 12px;
+    color: var(--red);
+    display: none;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    padding: 24px 40px;
+    border-top: 1px solid var(--border);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    .charts-grid, .charts-grid.thirds { grid-template-columns: 1fr; }
+    .chart-card.span2 { grid-column: span 1; }
+    header { padding: 20px; }
+    .page { padding: 20px; }
+    .nav-tabs { padding: 0 20px; overflow-x: auto; }
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">THE UNFORGETTABLE <span>CREATOR</span></div>
+    <div class="header-right">
+      <div class="live-badge"><div class="live-dot"></div> Live</div>
+      <div class="last-updated" id="lastUpdated">—</div>
+      <button class="refresh-btn" onclick="loadAll()">↻ Refresh</button>
+    </div>
+  </header>
+
+  <!-- NAV -->
+  <nav class="nav-tabs">
+    <div class="nav-tab active" onclick="switchPage('overview', this)">Overview</div>
+    <div class="nav-tab" onclick="switchPage('commissions', this)">Commissions</div>
+    <div class="nav-tab" onclick="switchPage('pipeline', this)">Pipeline</div>
+    <div class="nav-tab" onclick="switchPage('setter', this)">Setter Activity</div>
+  </nav>
+
+  <!-- ══════════════ PAGE: OVERVIEW ══════════════ -->
+  <div class="page active" id="page-overview">
+    <div class="error-banner" id="errorBanner">⚠ Could not load live data. Make sure your Google Sheet is shared publicly (Anyone with link → Viewer).</div>
+
+    <div class="section-title">Key Metrics</div>
+    <div class="scorecards" id="scorecards">
+      <div class="scorecard green"><div class="sc-label">Total Cash Collected</div><div class="sc-value" id="sc-cash">—</div><div class="sc-sub">All closes</div></div>
+      <div class="scorecard purple"><div class="sc-label">Total Closes</div><div class="sc-value" id="sc-closes">—</div><div class="sc-sub">Paid calls</div></div>
+      <div class="scorecard orange"><div class="sc-label">Close Rate</div><div class="sc-value" id="sc-closerate">—</div><div class="sc-sub">Closes ÷ total calls</div></div>
+      <div class="scorecard red"><div class="sc-label">Commissions Owed</div><div class="sc-value" id="sc-comm">—</div><div class="sc-sub">Total team</div></div>
+      <div class="scorecard purple"><div class="sc-label">Avg Deal Size</div><div class="sc-value" id="sc-avg">—</div><div class="sc-sub">Per close</div></div>
+      <div class="scorecard green"><div class="sc-label">April Target</div><div class="sc-value">$40K</div><div class="sc-sub" id="sc-target-sub">—</div></div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="chart-card span2">
+        <div class="chart-title">Cash Collected — Trend</div>
+        <div class="chart-sub">Cumulative cash over time</div>
+        <div class="chart-wrap tall"><canvas id="trendChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-title">Common Objections</div>
+        <div class="chart-sub">By frequency</div>
+        <div class="chart-wrap pie"><canvas id="objChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Booking Source</div>
+        <div class="chart-sub">How calls are being set</div>
+        <div class="chart-wrap pie"><canvas id="sourceChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ PAGE: COMMISSIONS ══════════════ -->
+  <div class="page" id="page-commissions">
+    <div class="section-title">Commission Leaderboard</div>
+    <div class="chart-card" style="margin-bottom:24px">
+      <div class="chart-title">Cash Collected vs Revenue Generated</div>
+      <div class="chart-sub">Per closer — updated live</div>
+      <div class="chart-wrap"><canvas id="commBarChart"></canvas></div>
+    </div>
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-title">Commission Earned ($)</div>
+        <div class="chart-sub">10% closer / 5% setter</div>
+        <div class="chart-wrap"><canvas id="commEarnedChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Rep Leaderboard</div>
+        <div class="chart-sub">Total cash collected</div>
+        <div id="leaderboardTable"><div class="loading"><div class="spinner"></div><span>Loading...</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ PAGE: PIPELINE ══════════════ -->
+  <div class="page" id="page-pipeline">
+    <div class="section-title">Pipeline Breakdown</div>
+    <div class="scorecards">
+      <div class="scorecard green"><div class="sc-label">Closed</div><div class="sc-value" id="pp-closed">—</div><div class="sc-sub">Paid</div></div>
+      <div class="scorecard orange"><div class="sc-label">Follow-Up</div><div class="sc-value" id="pp-fu">—</div><div class="sc-sub">Scheduled</div></div>
+      <div class="scorecard red"><div class="sc-label">No Shows</div><div class="sc-value" id="pp-noshow">—</div><div class="sc-sub">Did not attend</div></div>
+      <div class="scorecard purple"><div class="sc-label">Lost</div><div class="sc-value" id="pp-lost">—</div><div class="sc-sub">Not qualified / lost</div></div>
+    </div>
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-title">Call Outcomes</div>
+        <div class="chart-sub">All calls breakdown</div>
+        <div class="chart-wrap pie"><canvas id="outcomeChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Closes Per Rep</div>
+        <div class="chart-sub">Who's closing the most</div>
+        <div class="chart-wrap"><canvas id="closesPerRepChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ PAGE: SETTER ACTIVITY ══════════════ -->
+  <div class="page" id="page-setter">
+    <div class="section-title">Setter Activity</div>
+    <div class="scorecards">
+      <div class="scorecard green"><div class="sc-label">Total Sets</div><div class="sc-value" id="ss-sets">—</div><div class="sc-sub">Calls booked by setter</div></div>
+      <div class="scorecard purple"><div class="sc-label">Set → Show Rate</div><div class="sc-value" id="ss-showrate">—</div><div class="sc-sub">Of setter-booked calls</div></div>
+      <div class="scorecard orange"><div class="sc-label">Setter Comm Owed</div><div class="sc-value" id="ss-comm">—</div><div class="sc-sub">5% on closed sets</div></div>
+    </div>
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-title">Sets Per Rep</div>
+        <div class="chart-sub">Calls booked per setter</div>
+        <div class="chart-wrap"><canvas id="setsPerRepChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Booking Source Breakdown</div>
+        <div class="chart-sub">Inbound vs Outbound vs Self-booked</div>
+        <div class="chart-wrap pie"><canvas id="sourceChart2"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <span>The Unforgettable Creator — Arthur Cyiza</span>
+    <span id="footerTime">—</span>
+  </footer>
+</div>
+
+<script>
+const SHEET_ID = '1jP1987ISVH42ZGIWBizPozWDaevF-PYH06lCEJi7cDQ';
+const REPS = ['Loreen','Jaiden','Ellis','dm sdr'];
+
+let charts = {};
+let allData = { eoc: [], sheet1: [], fu: [] };
+
+// ── FETCH SHEET ──────────────────────────────────────────────────────────────
+async function fetchSheet(sheetName) {
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
+  const res = await fetch(url);
+  const text = await res.text();
+  const json = JSON.parse(text.substring(47, text.length - 2));
+  if (!json.table || !json.table.rows) return [];
+  const cols = json.table.cols.map(c => c.label || '');
+  return json.table.rows.map(row => {
+    const obj = {};
+    row.c.forEach((cell, i) => { obj[cols[i]] = cell ? (cell.f || cell.v) : null; });
+    return obj;
+  });
+}
+
+// ── HELPERS ──────────────────────────────────────────────────────────────────
+const fmt$ = v => v != null && v !== '' ? '$' + Number(v).toLocaleString() : '—';
+const fmtPct = v => v != null ? (v * 100).toFixed(0) + '%' : '—';
+const count = (arr, key, val) => arr.filter(r => r[key] === val).length;
+const sumKey = (arr, key) => arr.reduce((s, r) => s + (parseFloat(r[key]) || 0), 0);
+
+function countBy(arr, key) {
+  const map = {};
+  arr.forEach(r => { const v = r[key] || 'Unknown'; map[v] = (map[v] || 0) + 1; });
+  return map;
+}
+
+const CHART_COLORS = ['#7c5cfc','#00d4aa','#ffa94d','#ff6b6b','#74c0fc','#f783ac','#a9e34b'];
+
+function makeOrUpdate(id, type, data, options = {}) {
+  if (charts[id]) { charts[id].destroy(); }
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  charts[id] = new Chart(ctx, {
+    type,
+    data,
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          labels: { color: '#9898b0', font: { family: 'DM Mono', size: 11 }, padding: 16, boxWidth: 12 }
+        },
+        tooltip: {
+          backgroundColor: '#16161f',
+          titleColor: '#e8e8f0',
+          bodyColor: '#9898b0',
+          borderColor: '#1e1e2e',
+          borderWidth: 1,
+          padding: 12,
+          titleFont: { family: 'Syne', size: 13, weight: 'bold' },
+          bodyFont: { family: 'DM Mono', size: 11 },
+        }
+      },
+      scales: type !== 'pie' && type !== 'doughnut' ? {
+        x: { grid: { color: 'rgba(30,30,46,0.6)', drawBorder: false }, ticks: { color: '#6b6b8a', font: { family: 'DM Mono', size: 10 } } },
+        y: { grid: { color: 'rgba(30,30,46,0.6)', drawBorder: false }, ticks: { color: '#6b6b8a', font: { family: 'DM Mono', size: 10 } } }
+      } : {},
+      ...options
+    }
+  });
+}
+
+// ── LOAD ALL ─────────────────────────────────────────────────────────────────
+async function loadAll() {
+  document.getElementById('lastUpdated').textContent = 'Loading...';
+  document.getElementById('errorBanner').style.display = 'none';
+
+  try {
+    const [eoc, sheet1, fu] = await Promise.all([
+      fetchSheet('Form Responses 4'),
+      fetchSheet('Sheet1'),
+      fetchSheet('Form Responses 1'),
+    ]);
+    allData = { eoc, sheet1, fu };
+    renderAll();
+    const now = new Date();
+    document.getElementById('lastUpdated').textContent = 'Updated ' + now.toLocaleTimeString();
+    document.getElementById('footerTime').textContent = 'Last refresh: ' + now.toLocaleString();
+  } catch(e) {
+    document.getElementById('errorBanner').style.display = 'block';
+    document.getElementById('lastUpdated').textContent = 'Error loading data';
+    console.error(e);
+  }
+}
+
+// ── RENDER ALL ───────────────────────────────────────────────────────────────
+function renderAll() {
+  renderOverview();
+  renderCommissions();
+  renderPipeline();
+  renderSetter();
+}
+
+// ── OVERVIEW ─────────────────────────────────────────────────────────────────
+function renderOverview() {
+  const eoc = allData.eoc;
+  const sheet1 = allData.sheet1.filter(r => r['Rep Name'] && r['Rep Name'] !== 'Rep Name' && r['Rep Name'] !== 'TOTALS' && r['Rep Name'] !== 'ROW 1');
+
+  // Find cash column — try multiple possible names
+  const cashKey = findKey(eoc[0], ['Cash Collected ($)', 'Cash Collected', 'cash collected']);
+  const totalCash = sumKey(eoc, cashKey);
+  const totalCloses = eoc.filter(r => parseFloat(r[cashKey]) > 0).length;
+  const totalCalls = eoc.length;
+  const closeRate = totalCalls > 0 ? totalCloses / totalCalls : 0;
+  const avgDeal = totalCloses > 0 ? totalCash / totalCloses : 0;
+
+  // Commissions from Sheet1
+  const totalOwed = sheet1.reduce((s, r) => s + (parseFloat(r['Total Owed ($)']) || parseFloat(r['Total Commission Owed ($)']) || 0), 0);
+
+  document.getElementById('sc-cash').textContent = fmt$(totalCash);
+  document.getElementById('sc-closes').textContent = totalCloses;
+  document.getElementById('sc-closerate').textContent = fmtPct(closeRate);
+  document.getElementById('sc-comm').textContent = fmt$(totalOwed);
+  document.getElementById('sc-avg').textContent = fmt$(avgDeal);
+
+  const pct = Math.min(100, (totalCash / 40000 * 100)).toFixed(0);
+  document.getElementById('sc-target-sub').textContent = `${pct}% to goal`;
+
+  // Trend chart — group by date
+  const byDate = {};
+  eoc.forEach(r => {
+    const ts = r['Timestamp'] || r['timestamp'];
+    if (!ts) return;
+    const d = ts.split(' ')[0] || ts.split('T')[0];
+    byDate[d] = (byDate[d] || 0) + (parseFloat(r[cashKey]) || 0);
+  });
+  const dates = Object.keys(byDate).sort();
+  let cumulative = 0;
+  const cumData = dates.map(d => { cumulative += byDate[d]; return cumulative; });
+
+  makeOrUpdate('trendChart', 'line', {
+    labels: dates.length ? dates : ['No data yet'],
+    datasets: [{
+      label: 'Cash Collected ($)',
+      data: cumData.length ? cumData : [0],
+      borderColor: '#7c5cfc',
+      backgroundColor: 'rgba(124,92,252,0.08)',
+      fill: true,
+      tension: 0.4,
+      pointBackgroundColor: '#7c5cfc',
+      pointRadius: 4,
+    }]
+  });
+
+  // Objections pie
+  const objKey = findKey(eoc[0], ['Main Objection', 'Possible Objections', 'possible objections', 'Objection']);
+  const objMap = countBy(eoc.filter(r => r[objKey] && r[objKey] !== 'No Objection (Closed)'), objKey);
+  renderPie('objChart', objMap, 'doughnut');
+
+  // Booking source pie
+  const srcKey = findKey(eoc[0], ['Booking Source', 'How was it set', 'how was it set', 'Source']);
+  const srcMap = countBy(eoc.filter(r => r[srcKey]), srcKey);
+  renderPie('sourceChart', srcMap, 'doughnut');
+}
+
+// ── COMMISSIONS ──────────────────────────────────────────────────────────────
+function renderCommissions() {
+  const sheet1 = allData.sheet1.filter(r => {
+    const n = r['Rep Name'] || '';
+    return n && !['Rep Name','TOTALS','ROW 1',''].includes(n) && !n.startsWith('ROW');
+  });
+
+  const names = sheet1.map(r => r['Rep Name'] || '');
+  const cash = sheet1.map(r => parseFloat(r['Total Cash Collected ($)']) || 0);
+  const revenue = sheet1.map(r => parseFloat(r['Total Cash Collected ($)']) || 0); // same for now
+  const closerComm = sheet1.map(r => parseFloat(r['Closer Comm (10%)']) || 0);
+  const setterComm = sheet1.map(r => parseFloat(r['Setter Comm (5%)']) || 0);
+  const totalOwed = sheet1.map(r => parseFloat(r['Total Owed ($)']) || 0);
+
+  makeOrUpdate('commBarChart', 'bar', {
+    labels: names.length ? names : REPS,
+    datasets: [
+      { label: 'Cash Collected', data: cash, backgroundColor: 'rgba(0,212,170,0.7)', borderColor: '#00d4aa', borderWidth: 1, borderRadius: 4 },
+      { label: 'Revenue Generated', data: revenue, backgroundColor: 'rgba(124,92,252,0.5)', borderColor: '#7c5cfc', borderWidth: 1, borderRadius: 4 },
+    ]
+  });
+
+  makeOrUpdate('commEarnedChart', 'bar', {
+    labels: names.length ? names : REPS,
+    datasets: [
+      { label: 'Closer Comm (10%)', data: closerComm, backgroundColor: 'rgba(255,169,77,0.7)', borderColor: '#ffa94d', borderWidth: 1, borderRadius: 4 },
+      { label: 'Setter Comm (5%)', data: setterComm, backgroundColor: 'rgba(247,131,172,0.5)', borderColor: '#f783ac', borderWidth: 1, borderRadius: 4 },
+    ]
+  });
+
+  // Leaderboard table
+  const sorted = sheet1.slice().sort((a,b) => (parseFloat(b['Total Cash Collected ($)']) || 0) - (parseFloat(a['Total Cash Collected ($)']) || 0));
+  const lb = document.getElementById('leaderboardTable');
+
+  if (!sorted.length) {
+    lb.innerHTML = '<div class="empty-state"><div class="empty-icon">📊</div><div>No data yet — submit your first EOC form</div></div>';
+    return;
+  }
+
+  lb.innerHTML = `<table class="lb-table">
+    <thead><tr>
+      <th></th><th>Rep</th><th>Role</th><th>Cash</th><th>Closes</th><th>Rate</th><th>Comm Owed</th>
+    </tr></thead>
+    <tbody>${sorted.map((r, i) => `
+      <tr>
+        <td><div class="rank-num ${i === 0 ? 'top' : ''}">${i+1}</div></td>
+        <td><div class="rep-name">${r['Rep Name'] || '—'}</div></td>
+        <td><span class="role-badge ${(r['Role'] || '').toLowerCase()}">${r['Role'] || '—'}</span></td>
+        <td><span class="cash-val">${fmt$(r['Total Cash Collected ($)'])}</span></td>
+        <td>${r['Total Closes'] || 0}</td>
+        <td>${r['Close Rate %'] || '—'}</td>
+        <td><span class="comm-val">${fmt$(r['Total Owed ($)'])}</span></td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+
+  // Progress bars toward $40K target
+  const pbContainer = document.getElementById('page-commissions');
+  let pbDiv = document.getElementById('progressBars');
+  if (!pbDiv) {
+    pbDiv = document.createElement('div');
+    pbDiv.id = 'progressBars';
+    pbDiv.className = 'chart-card';
+    pbDiv.style.marginBottom = '24px';
+    pbDiv.innerHTML = `<div class="chart-title">Individual Progress to $40K Team Target</div><div class="chart-sub">Cash collected per rep</div><div id="pbInner"></div>`;
+    pbContainer.insertBefore(pbDiv, pbContainer.querySelector('.charts-grid'));
+  }
+  document.getElementById('pbInner').innerHTML = sorted.map(r => {
+    const v = parseFloat(r['Total Cash Collected ($)']) || 0;
+    const pct = Math.min(100, (v / 40000 * 100)).toFixed(1);
+    return `<div class="progress-wrap">
+      <div class="progress-label"><span class="name">${r['Rep Name'] || '—'}</span><span class="val">${fmt$(v)} <span style="color:var(--muted);font-weight:400">(${pct}%)</span></span></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+}
+
+// ── PIPELINE ─────────────────────────────────────────────────────────────────
+function renderPipeline() {
+  const eoc = allData.eoc;
+  const outcomeKey = findKey(eoc[0], ['Call Outcome', 'Outcome', 'outcome', 'Status']);
+
+  const outcomes = countBy(eoc.filter(r => r[outcomeKey]), outcomeKey);
+
+  document.getElementById('pp-closed').textContent = outcomes['Closed'] || 0;
+  document.getElementById('pp-fu').textContent = outcomes['Follow-Up Scheduled'] || outcomes['Follow Up'] || 0;
+  document.getElementById('pp-noshow').textContent = outcomes['No Show'] || 0;
+  document.getElementById('pp-lost').textContent = (outcomes['Lost'] || 0) + (outcomes['Not Qualified'] || 0);
+
+  renderPie('outcomeChart', outcomes, 'pie');
+
+  // Closes per rep
+  const closerKey = findKey(eoc[0], ['Closer Name', 'Booked to', 'booked to', 'Closer']);
+  const cashKey = findKey(eoc[0], ['Cash Collected ($)', 'Cash Collected', 'cash collected']);
+  const closesMap = {};
+  eoc.filter(r => parseFloat(r[cashKey]) > 0).forEach(r => {
+    const n = r[closerKey] || 'Unknown';
+    closesMap[n] = (closesMap[n] || 0) + 1;
+  });
+
+  makeOrUpdate('closesPerRepChart', 'bar', {
+    labels: Object.keys(closesMap).length ? Object.keys(closesMap) : REPS,
+    datasets: [{
+      label: 'Closes',
+      data: Object.values(closesMap).length ? Object.values(closesMap) : [0,0,0,0],
+      backgroundColor: CHART_COLORS.map(c => c + 'bb'),
+      borderColor: CHART_COLORS,
+      borderWidth: 1,
+      borderRadius: 6,
+    }]
+  });
+}
+
+// ── SETTER ───────────────────────────────────────────────────────────────────
+function renderSetter() {
+  const eoc = allData.eoc;
+  const setterKey = findKey(eoc[0], ['Setter Name', 'Set by', 'set by', 'Setter']);
+  const srcKey = findKey(eoc[0], ['Booking Source', 'How was it set', 'how was it set']);
+  const cashKey = findKey(eoc[0], ['Cash Collected ($)', 'Cash Collected', 'cash collected']);
+
+  const setterRows = eoc.filter(r => r[setterKey] && r[setterKey] !== 'Self-Booked');
+  const totalSets = setterRows.length;
+  const setterShows = setterRows.filter(r => r[cashKey] !== null && r[cashKey] !== '').length;
+  const showRate = totalSets > 0 ? setterShows / totalSets : 0;
+  const setterCash = sumKey(setterRows.filter(r => parseFloat(r[cashKey]) > 0), cashKey);
+  const setterComm = setterCash * 0.05;
+
+  document.getElementById('ss-sets').textContent = totalSets;
+  document.getElementById('ss-showrate').textContent = fmtPct(showRate);
+  document.getElementById('ss-comm').textContent = fmt$(setterComm);
+
+  // Sets per rep
+  const setsMap = countBy(setterRows, setterKey);
+  makeOrUpdate('setsPerRepChart', 'bar', {
+    labels: Object.keys(setsMap).length ? Object.keys(setsMap) : REPS,
+    datasets: [{
+      label: 'Calls Set',
+      data: Object.values(setsMap).length ? Object.values(setsMap) : [0,0,0,0],
+      backgroundColor: 'rgba(0,212,170,0.6)',
+      borderColor: '#00d4aa',
+      borderWidth: 1,
+      borderRadius: 6,
+    }]
+  });
+
+  // Source pie
+  const srcMap = countBy(eoc.filter(r => r[srcKey]), srcKey);
+  renderPie('sourceChart2', srcMap, 'doughnut');
+}
+
+// ── PIE HELPER ───────────────────────────────────────────────────────────────
+function renderPie(id, map, type = 'doughnut') {
+  const labels = Object.keys(map);
+  const data = Object.values(map);
+  if (!labels.length) {
+    const canvas = document.getElementById(id);
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#6b6b8a';
+      ctx.font = '12px DM Mono';
+      ctx.textAlign = 'center';
+      ctx.fillText('No data yet', canvas.width/2, canvas.height/2);
+    }
+    return;
+  }
+  makeOrUpdate(id, type, {
+    labels,
+    datasets: [{
+      data,
+      backgroundColor: CHART_COLORS.map(c => c + 'cc'),
+      borderColor: CHART_COLORS,
+      borderWidth: 2,
+      hoverOffset: 8,
+    }]
+  }, { cutout: type === 'doughnut' ? '65%' : '0%' });
+}
+
+// ── FIND KEY HELPER ──────────────────────────────────────────────────────────
+function findKey(obj, options) {
+  if (!obj) return options[0];
+  for (const opt of options) {
+    if (obj.hasOwnProperty(opt)) return opt;
+  }
+  // fuzzy fallback
+  const keys = Object.keys(obj || {});
+  for (const opt of options) {
+    const match = keys.find(k => k.toLowerCase().includes(opt.toLowerCase().split(' ')[0]));
+    if (match) return match;
+  }
+  return options[0];
+}
+
+// ── PAGE SWITCHING ───────────────────────────────────────────────────────────
+function switchPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  el.classList.add('active');
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+loadAll();
+// Auto-refresh every 2 minutes
+setInterval(loadAll, 120000);
+</script>
+</body>
+</html>
